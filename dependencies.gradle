@@ -26,6 +26,7 @@ ext.deps = [
         core: "org.jetbrains.exposed:exposed-core:${exposedVersion}",
         dao: "org.jetbrains.exposed:exposed-dao:${exposedVersion}",
         jdbc: "org.jetbrains.exposed:exposed-jdbc:${exposedVersion}",
+        javaTime: "org.jetbrains.exposed:exposed-java-time:${exposedVersion}",
     ],
     testContainers: [
         core: "org.testcontainers:testcontainers:${testContainersVersion}",
