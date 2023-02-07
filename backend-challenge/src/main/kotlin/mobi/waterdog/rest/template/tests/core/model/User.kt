@@ -24,3 +24,19 @@ data class User(
             .isEmail()
     }
 }
+
+@Serializable
+data class UserSaveCommand(
+    val name: String,
+    val email: String
+) : Validatable<UserSaveCommand>() {
+    override fun rules(validator: Validator<UserSaveCommand>) {
+        validator
+            .validate(UserSaveCommand::name)
+            .hasSize(3, 255)
+        validator
+            .validate(UserSaveCommand::email)
+            .isNotBlank()
+            .isEmail()
+    }
+}

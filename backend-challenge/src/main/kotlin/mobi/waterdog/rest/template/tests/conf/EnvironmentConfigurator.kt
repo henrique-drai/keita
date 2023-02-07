@@ -5,10 +5,13 @@ import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
 import mobi.waterdog.rest.template.database.DatabaseConnection
+import mobi.waterdog.rest.template.tests.core.persistance.RepairRepository
+import mobi.waterdog.rest.template.tests.core.persistance.RepairTypeRepository
 import mobi.waterdog.rest.template.tests.core.persistance.UserRepository
+import mobi.waterdog.rest.template.tests.core.persistance.sql.RepairRepositoryImpl
+import mobi.waterdog.rest.template.tests.core.persistance.sql.RepairTypeRepositoryImpl
 import mobi.waterdog.rest.template.tests.core.persistance.sql.UserRepositoryImpl
-import mobi.waterdog.rest.template.tests.core.service.UserService
-import mobi.waterdog.rest.template.tests.core.service.UserServiceImpl
+import mobi.waterdog.rest.template.tests.core.service.*
 import org.flywaydb.core.Flyway
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -41,6 +44,10 @@ class EnvironmentConfigurator(baseConfig: ApplicationConfig, configOverrides: Ap
     private fun initServicesAndRepos() = module {
         single<UserRepository> { UserRepositoryImpl() }
         single<UserService> { UserServiceImpl(get(), get()) }
+        single<RepairRepository> { RepairRepositoryImpl() }
+        single<RepairService> { RepairServiceImpl(get(), get()) }
+        single<RepairTypeRepository> { RepairTypeRepositoryImpl() }
+        single<RepairTypeService> { RepairTypeServiceImpl(get(), get()) }
     }
 
     private fun initDbCore() = module {

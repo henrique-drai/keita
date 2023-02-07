@@ -1,7 +1,9 @@
 package mobi.waterdog.rest.template.tests.core.model
 
 enum class RepairStatus(val status: String) {
-    CREATED("Created"),
-    IN_PROGRESS("InProgress"),
-    COMPLETE("Complete")
+    Created("Created"),
+    InProgress("InProgress"),
+    Complete("Complete");
+
+    override fun toString(): String = this.status
 }

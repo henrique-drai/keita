@@ -3,15 +3,13 @@ package mobi.waterdog.rest.template.tests.core.persistance
 import mobi.waterdog.rest.template.pagination.PageRequest
 import mobi.waterdog.rest.template.tests.core.model.RepairType
 import mobi.waterdog.rest.template.tests.core.model.RepairTypeSaveCommand
-import mobi.waterdog.rest.template.tests.core.model.User
-import mobi.waterdog.rest.template.tests.core.model.UserSaveCommand
-import java.util.UUID
+import java.util.*
 
-interface UserRepository {
+interface RepairTypeRepository {
     fun exists(id: UUID): Boolean
-    fun getById(id: UUID): User?
-    fun save(user: UserSaveCommand): User
+    fun getById(id: UUID): RepairType?
+    fun save(repairType: RepairTypeSaveCommand): RepairType
     fun count(pageRequest: PageRequest = PageRequest()): Int
     fun delete(id: UUID)
-    fun list(pageRequest: PageRequest = PageRequest()): List<User>
+    fun list(pageRequest: PageRequest = PageRequest()): List<RepairType>
 }
