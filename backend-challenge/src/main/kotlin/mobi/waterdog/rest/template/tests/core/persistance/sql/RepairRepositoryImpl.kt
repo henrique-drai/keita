@@ -6,17 +6,14 @@ import mobi.waterdog.rest.template.pagination.PageRequest
 import mobi.waterdog.rest.template.tests.core.model.Repair
 import mobi.waterdog.rest.template.tests.core.model.RepairSaveCommand
 import mobi.waterdog.rest.template.tests.core.model.RepairStatus
-import mobi.waterdog.rest.template.tests.core.model.RepairType
 import mobi.waterdog.rest.template.tests.core.persistance.RepairRepository
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
-import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
-import java.util.Date
 
 class RepairRepositoryImpl : RepairRepository {
 

@@ -6,7 +6,7 @@ import mobi.waterdog.rest.template.tests.core.persistance.UserRepository
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
-class UserServiceImpl (
+class UserServiceImpl(
     private val userRepository: UserRepository,
     private val dbc: DatabaseConnection
 ) :

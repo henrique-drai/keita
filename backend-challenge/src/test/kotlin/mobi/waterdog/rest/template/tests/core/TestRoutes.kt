@@ -1,15 +1,26 @@
 package mobi.waterdog.rest.template.tests.core
 
 import io.ktor.client.call.body
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import mobi.waterdog.rest.template.database.DatabaseConnection
 import mobi.waterdog.rest.template.pagination.PageRequest
 import mobi.waterdog.rest.template.pagination.PageResponse
 import mobi.waterdog.rest.template.pagination.PaginationUtils
 import mobi.waterdog.rest.template.tests.conf.EnvironmentConfigurator
 import mobi.waterdog.rest.template.tests.containers.PgSQLContainerFactory
-import mobi.waterdog.rest.template.tests.core.model.*
+import mobi.waterdog.rest.template.tests.core.model.Repair
+import mobi.waterdog.rest.template.tests.core.model.RepairSaveCommand
+import mobi.waterdog.rest.template.tests.core.model.RepairStatus
+import mobi.waterdog.rest.template.tests.core.model.RepairType
+import mobi.waterdog.rest.template.tests.core.model.RepairTypeSaveCommand
+import mobi.waterdog.rest.template.tests.core.model.User
+import mobi.waterdog.rest.template.tests.core.model.UserSaveCommand
 import mobi.waterdog.rest.template.tests.core.persistance.RepairRepository
 import mobi.waterdog.rest.template.tests.core.persistance.RepairTypeRepository
 import mobi.waterdog.rest.template.tests.core.persistance.UserRepository
@@ -17,7 +28,11 @@ import mobi.waterdog.rest.template.tests.core.utils.json.JsonSettings
 import mobi.waterdog.rest.template.tests.core.utils.versioning.ApiVersion
 import mobi.waterdog.rest.template.tests.module
 import org.amshove.kluent.`should be equal to`
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.test.KoinTest
@@ -113,7 +128,7 @@ class TestRoutes : KoinTest {
                 expectedRepairTypeId = newRepairType1.id
             }
 
-            with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[repair_type_id]=${expectedRepairTypeId}")) {
+            with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[repair_type_id]=$expectedRepairTypeId")) {
                 status `should be equal to` HttpStatusCode.OK
                 val res: PageResponse<Repair> = body()
                 res.data.size `should be equal to` 2
@@ -131,7 +146,7 @@ class TestRoutes : KoinTest {
         }
 
         val repairType = RepairTypeSaveCommand("name", "description")
-        val newRepairTypeId : UUID
+        val newRepairTypeId: UUID
 
         with(
             client.post("/$apiVersion/repair_types") {
@@ -165,7 +180,7 @@ class TestRoutes : KoinTest {
 
     @Test
     fun `List of created repairs for a user`() = testAppWithConfig {
-        var newUsers : List<User>
+        var newUsers: List<User>
         var expectedUserId = UUID.randomUUID()
 
         runInKoinContext {
@@ -180,7 +195,7 @@ class TestRoutes : KoinTest {
             expectedUserId = newUsers[0].id
         }
 
-        with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[user_id]=${expectedUserId}")) {
+        with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[user_id]=$expectedUserId")) {
             status `should be equal to` HttpStatusCode.OK
             val res: PageResponse<Repair> = body()
             res.data.size `should be equal to` 2
@@ -208,9 +223,9 @@ class TestRoutes : KoinTest {
         }
     }
 
-    private fun generateRandomEmail() : String {
+    private fun generateRandomEmail(): String {
         val identifier = UUID.randomUUID().toString().replace("-", ".")
-        return "${identifier}@mail.com"
+        return "$identifier@mail.com"
     }
 
     private fun insertRepairType(
@@ -224,7 +239,7 @@ class TestRoutes : KoinTest {
     }
 
     // Limits the instant's precision to milliseconds to make it consistent with sql timestamp.
-    private fun getLimitedPrecisionInstant(instant: Instant = Instant.now()) : Instant {
+    private fun getLimitedPrecisionInstant(instant: Instant = Instant.now()): Instant {
         return Instant.ofEpochMilli(instant.toEpochMilli())
     }
 

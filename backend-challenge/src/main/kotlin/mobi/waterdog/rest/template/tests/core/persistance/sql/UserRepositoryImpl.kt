@@ -3,7 +3,6 @@ package mobi.waterdog.rest.template.tests.core.persistance.sql
 import mobi.waterdog.rest.template.database.createSorts
 import mobi.waterdog.rest.template.database.fromFilters
 import mobi.waterdog.rest.template.pagination.PageRequest
-import mobi.waterdog.rest.template.tests.core.model.RepairType
 import mobi.waterdog.rest.template.tests.core.model.User
 import mobi.waterdog.rest.template.tests.core.model.UserSaveCommand
 import mobi.waterdog.rest.template.tests.core.persistance.UserRepository

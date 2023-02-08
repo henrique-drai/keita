@@ -13,7 +13,8 @@ data class User(
     @Serializable(with = UUIDSerializer::class)
     val id: UUID,
     val name: String,
-    val email: String) : Validatable<User>() {
+    val email: String
+) : Validatable<User>() {
     override fun rules(validator: Validator<User>) {
         validator
             .validate(User::name)

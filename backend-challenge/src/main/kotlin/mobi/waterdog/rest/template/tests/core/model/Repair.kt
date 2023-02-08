@@ -11,20 +11,20 @@ data class Repair(
     @Serializable(with = UUIDSerializer::class)
     val id: UUID,
     @Serializable(with = InstantSerializer::class)
-    val createdAt : Instant,
-    val status : RepairStatus,
+    val createdAt: Instant,
+    val status: RepairStatus,
     @Serializable(with = UUIDSerializer::class)
-    val userId : UUID,
+    val userId: UUID,
     @Serializable(with = UUIDSerializer::class)
-    val repairTypeId : UUID
-) : Validatable<Repair>(){
+    val repairTypeId: UUID
+) : Validatable<Repair>() {
     override fun rules(validator: Validator<Repair>) {}
 }
 
 @Serializable
 data class RepairSaveCommand(
     @Serializable(with = InstantSerializer::class)
-    val createdAt : Instant,
+    val createdAt: Instant,
     val status: RepairStatus,
     @Serializable(with = UUIDSerializer::class)
     val userId: UUID,

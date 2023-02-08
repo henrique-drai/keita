@@ -3,7 +3,7 @@ package mobi.waterdog.rest.template.tests.core.persistance
 import mobi.waterdog.rest.template.pagination.PageRequest
 import mobi.waterdog.rest.template.tests.core.model.RepairType
 import mobi.waterdog.rest.template.tests.core.model.RepairTypeSaveCommand
-import java.util.*
+import java.util.UUID
 
 interface RepairTypeRepository {
     fun exists(id: UUID): Boolean

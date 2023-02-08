@@ -11,7 +11,12 @@ import mobi.waterdog.rest.template.tests.core.persistance.UserRepository
 import mobi.waterdog.rest.template.tests.core.persistance.sql.RepairRepositoryImpl
 import mobi.waterdog.rest.template.tests.core.persistance.sql.RepairTypeRepositoryImpl
 import mobi.waterdog.rest.template.tests.core.persistance.sql.UserRepositoryImpl
-import mobi.waterdog.rest.template.tests.core.service.*
+import mobi.waterdog.rest.template.tests.core.service.RepairService
+import mobi.waterdog.rest.template.tests.core.service.RepairServiceImpl
+import mobi.waterdog.rest.template.tests.core.service.RepairTypeService
+import mobi.waterdog.rest.template.tests.core.service.RepairTypeServiceImpl
+import mobi.waterdog.rest.template.tests.core.service.UserService
+import mobi.waterdog.rest.template.tests.core.service.UserServiceImpl
 import org.flywaydb.core.Flyway
 import org.koin.core.module.Module
 import org.koin.dsl.module
