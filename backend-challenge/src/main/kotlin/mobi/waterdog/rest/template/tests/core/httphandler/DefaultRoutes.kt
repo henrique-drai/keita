@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import mobi.waterdog.rest.template.pagination.PageResponse
 import mobi.waterdog.rest.template.pagination.parsePageRequest
+import mobi.waterdog.rest.template.tests.core.model.RepairSaveCommand
 import mobi.waterdog.rest.template.tests.core.model.RepairTypeSaveCommand
 import mobi.waterdog.rest.template.tests.core.service.RepairService
 import mobi.waterdog.rest.template.tests.core.service.RepairTypeService
@@ -56,7 +57,15 @@ fun Route.defaultRoutes() {
         val newRepairType = call.receive<RepairTypeSaveCommand>()
         newRepairType.validate()
 
-        val insertedCar = repairTypeService.insertNewRepairType(RepairTypeSaveCommand(newRepairType.name, newRepairType.description))
+        val insertedCar = repairTypeService.insertNewRepairType(newRepairType)
+        call.respond(insertedCar)
+    }
+
+    post("/$apiVersion/repairs") {
+        val newRepair = call.receive<RepairSaveCommand>()
+        newRepair.validate()
+
+        val insertedCar = repairService.insertNewRepair(newRepair)
         call.respond(insertedCar)
     }
 }

@@ -1,17 +1,19 @@
 package mobi.waterdog.rest.template.tests.core
 
 import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.request.*
+import io.ktor.http.*
 import mobi.waterdog.rest.template.database.DatabaseConnection
 import mobi.waterdog.rest.template.pagination.PageRequest
 import mobi.waterdog.rest.template.pagination.PageResponse
+import mobi.waterdog.rest.template.pagination.PaginationUtils
 import mobi.waterdog.rest.template.tests.conf.EnvironmentConfigurator
 import mobi.waterdog.rest.template.tests.containers.PgSQLContainerFactory
 import mobi.waterdog.rest.template.tests.core.model.*
 import mobi.waterdog.rest.template.tests.core.persistance.RepairRepository
 import mobi.waterdog.rest.template.tests.core.persistance.RepairTypeRepository
 import mobi.waterdog.rest.template.tests.core.persistance.UserRepository
+import mobi.waterdog.rest.template.tests.core.utils.json.JsonSettings
 import mobi.waterdog.rest.template.tests.core.utils.versioning.ApiVersion
 import mobi.waterdog.rest.template.tests.module
 import org.amshove.kluent.`should be equal to`
@@ -34,34 +36,197 @@ class TestRoutes : KoinTest {
     }
 
     private val apiVersion = ApiVersion.Latest
+    private val userRepository: UserRepository by inject()
+    private val repairRepository: RepairRepository by inject()
     private val repairTypeRepository: RepairTypeRepository by inject()
     private val dbc: DatabaseConnection by inject()
     private val appModules by lazy { EnvironmentConfigurator(dbContainer.configInfo()).getDependencyInjectionModules() }
 
-    @BeforeAll
-    fun setup() {
-        startKoin { modules(appModules) }
+    private fun runInKoinContext(block: () -> Unit) {
+        stopKoin()
+        startKoin {
+            modules(appModules)
+        }
+        block()
+        stopKoin()
     }
 
     @AfterEach
-    fun cleanDatabase() {
+    fun cleanDatabase() = runInKoinContext {
         dbc.query {
             val repairTypes =
                 repairTypeRepository.list(PageRequest(page = 0, size = Int.MAX_VALUE, sort = listOf(), filter = listOf()))
             repairTypes.forEach {
                 repairTypeRepository.delete(it.id)
             }
-            repairTypeRepository.count() `should be equal to` 0
+
+            val users =
+                userRepository.list(PageRequest(page = 0, size = Int.MAX_VALUE, sort = listOf(), filter = listOf()))
+            users.forEach {
+                userRepository.delete(it.id)
+            }
+
+            repairRepository.count() `should be equal to` 0
         }
     }
 
-    @AfterAll
-    fun cleanup() {
-        stopKoin()
+    @Nested
+    @DisplayName("Test repairs listing")
+    inner class TestCarList {
+        @Test
+        fun `Works without any extra parameters`() = testAppWithConfig {
+            var expectedRepairs: List<Repair> = listOf()
+
+            runInKoinContext {
+                val newUser = insertUser()
+                val newRepairType1 = insertRepairType()
+                val newRepairType2 = insertRepairType()
+
+                expectedRepairs = listOf(
+                    insertRepair(userId = newUser.id, repairTypeId = newRepairType1.id),
+                    insertRepair(userId = newUser.id, repairTypeId = newRepairType1.id),
+                    insertRepair(userId = newUser.id, repairTypeId = newRepairType2.id),
+                )
+            }
+
+            with(client.get("/$apiVersion/repairs")) {
+                status `should be equal to` HttpStatusCode.OK
+                val res: PageResponse<Repair> = body()
+                res.data.size `should be equal to` expectedRepairs.size
+                res.data `should be equal to` expectedRepairs
+            }
+        }
+
+        @Test
+        fun `Works with filter by repair type`() = testAppWithConfig {
+            var expectedRepairTypeId = UUID.randomUUID()
+
+            runInKoinContext {
+                val newUser = insertUser()
+                val newRepairType1 = insertRepairType()
+                val newRepairType2 = insertRepairType()
+
+                insertRepair(userId = newUser.id, repairTypeId = newRepairType1.id)
+                insertRepair(userId = newUser.id, repairTypeId = newRepairType1.id)
+                insertRepair(userId = newUser.id, repairTypeId = newRepairType2.id)
+
+                expectedRepairTypeId = newRepairType1.id
+            }
+
+            with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[repair_type_id]=${expectedRepairTypeId}")) {
+                status `should be equal to` HttpStatusCode.OK
+                val res: PageResponse<Repair> = body()
+                res.data.size `should be equal to` 2
+            }
+        }
     }
 
     @Test
-    fun `This test will fail due to Koin initialization`() = testAppWithConfig {}
+    fun `Users can create specific repair services`() = testAppWithConfig {
+        var newUserId = UUID.randomUUID()
+
+        runInKoinContext {
+            val newUser = insertUser()
+            newUserId = newUser.id
+        }
+
+        val repairType = RepairTypeSaveCommand("name", "description")
+        val newRepairTypeId : UUID
+
+        with(
+            client.post("/$apiVersion/repair_types") {
+                header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                setBody(JsonSettings.toJson(repairType))
+            }
+        ) {
+            status `should be equal to` HttpStatusCode.OK
+            val newRepairType: RepairType = body()
+            newRepairTypeId = newRepairType.id
+            newRepairType.name `should be equal to` repairType.name
+            newRepairType.description `should be equal to` repairType.description
+        }
+
+        val repair = RepairSaveCommand(getLimitedPrecisionInstant(), RepairStatus.Created, newUserId, newRepairTypeId)
+
+        with(
+            client.post("/$apiVersion/repairs") {
+                header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                setBody(JsonSettings.toJson(repair))
+            }
+        ) {
+            status `should be equal to` HttpStatusCode.OK
+            val newRepair: Repair = body()
+            newRepair.userId `should be equal to` repair.userId
+            newRepair.repairTypeId `should be equal to` repair.repairTypeId
+            newRepair.status `should be equal to` repair.status
+            newRepair.createdAt `should be equal to` repair.createdAt
+        }
+    }
+
+    @Test
+    fun `List of created repairs for a user`() = testAppWithConfig {
+        var newUsers : List<User>
+        var expectedUserId = UUID.randomUUID()
+
+        runInKoinContext {
+            newUsers = listOf(insertUser(), insertUser())
+
+            val newRepairType = insertRepairType()
+
+            insertRepair(userId = newUsers[0].id, repairTypeId = newRepairType.id)
+            insertRepair(userId = newUsers[0].id, repairTypeId = newRepairType.id)
+            insertRepair(userId = newUsers[1].id, repairTypeId = newRepairType.id)
+
+            expectedUserId = newUsers[0].id
+        }
+
+        with(client.get("/$apiVersion/repairs?${PaginationUtils.PAGE_FILTER}[user_id]=${expectedUserId}")) {
+            status `should be equal to` HttpStatusCode.OK
+            val res: PageResponse<Repair> = body()
+            res.data.size `should be equal to` 2
+        }
+    }
+
+    private fun insertRepair(
+        status: RepairStatus = RepairStatus.Created,
+        userId: UUID,
+        repairTypeId: UUID,
+    ): Repair {
+        return dbc.query {
+            val newRepair = RepairSaveCommand(getLimitedPrecisionInstant(), status, userId, repairTypeId)
+            repairRepository.save(newRepair)
+        }
+    }
+
+    private fun insertUser(
+        name: String = UUID.randomUUID().toString(),
+        email: String = generateRandomEmail()
+    ): User {
+        return dbc.query {
+            val newUser = UserSaveCommand(name, email)
+            userRepository.save(newUser)
+        }
+    }
+
+    private fun generateRandomEmail() : String {
+        val identifier = UUID.randomUUID().toString().replace("-", ".")
+        return "${identifier}@mail.com"
+    }
+
+    private fun insertRepairType(
+        name: String = UUID.randomUUID().toString(),
+        description: String = UUID.randomUUID().toString()
+    ): RepairType {
+        return dbc.query {
+            val newRepairType = RepairTypeSaveCommand(name, description)
+            repairTypeRepository.save(newRepairType)
+        }
+    }
+
+    // Limits the instant's precision to milliseconds to make it consistent with sql timestamp.
+    private fun getLimitedPrecisionInstant(instant: Instant = Instant.now()) : Instant {
+        return Instant.ofEpochMilli(instant.toEpochMilli())
+    }
 
     private fun testAppWithConfig(test: suspend TestApplicationContext.() -> Unit) {
         testApp(
