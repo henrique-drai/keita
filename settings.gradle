@@ -1,5 +1,3 @@
-rootProject.name = 'ktor-template'
-include ":ktor-template-core"
-include ":ktor-template-database"
-include ":backend-challenge"
+
+rootProject.name = 'keita'
 
